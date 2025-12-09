@@ -1,0 +1,7 @@
+{
+  "name": "STACKNOVA - Advanced University Management",
+  "description": "A comprehensive, role-based university management system with real-time attendance tracking, geolocation integration, and curriculum management.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
