@@ -14,6 +14,8 @@ export interface User {
   division?: string;
   classTeacherId?: string;
   avatar?: string;
+  password?: string; // Encrypted (mock) or plain for now
+  phoneNumber?: string;
 }
 
 export interface Notice {

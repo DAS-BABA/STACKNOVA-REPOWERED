@@ -1,16 +1,18 @@
 import React from 'react';
 import { User, UserRole } from '../types';
-import { 
-  LogOut, 
-  User as UserIcon, 
-  BookOpen, 
-  Calendar, 
-  Bell, 
-  MapPin, 
-  Users, 
+import {
+  LogOut,
+  User as UserIcon,
+  BookOpen,
+  Calendar,
+  Bell,
+  MapPin,
+  Users,
   Shield,
   Menu,
-  X
+  X,
+  ChevronRight,
+  Sparkles
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -57,53 +59,71 @@ const Layout: React.FC<LayoutProps> = ({ children, currentUser, onLogout, active
   const menuItems = getMenuItems();
 
   return (
-    <div className="flex h-screen bg-slate-50 text-slate-900 overflow-hidden font-sans selection:bg-indigo-100 selection:text-indigo-900">
+    <div className="flex h-screen bg-slate-50 text-slate-900 overflow-hidden font-sans selection:bg-indigo-500 selection:text-white">
       {/* Sidebar for Desktop */}
-      <aside className="hidden md:flex flex-col w-72 bg-white border-r border-slate-200 shadow-sm z-20">
-        <div className="p-8 flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center font-bold text-white text-xl shadow-lg shadow-indigo-200">
+      <aside className="hidden md:flex flex-col w-80 bg-white border-r border-slate-200 shadow-xl shadow-slate-200/50 z-20 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-slate-50 pointer-events-none"></div>
+
+        <div className="p-8 flex items-center space-x-3 relative z-10">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center font-bold text-white text-2xl shadow-lg shadow-indigo-500/30">
             S
           </div>
-          <span className="text-xl font-bold text-slate-900 tracking-tight">
-            STACKNOVA
-          </span>
+          <div>
+            <span className="text-xl font-black text-slate-900 tracking-tight block leading-none">
+              STACKNOVA
+            </span>
+            <span className="text-[10px] uppercase font-bold text-indigo-600 tracking-widest">
+              Repowered
+            </span>
+          </div>
         </div>
-        
-        <div className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-          <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-2">Menu</p>
+
+        <div className="flex-1 px-4 py-4 space-y-1.5 overflow-y-auto scrollbar-hide relative z-10">
+          <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 mt-2">Menu</p>
           {menuItems.map((item) => (
             <button
               key={item.id}
               onClick={() => onTabChange(item.id)}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium ${
-                activeTab === item.id 
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' 
-                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
-              }`}
+              className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-300 font-bold group relative overflow-hidden ${activeTab === item.id
+                  ? 'text-white shadow-lg shadow-indigo-500/30'
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-indigo-600'
+                }`}
             >
-              {item.icon}
-              <span>{item.label}</span>
+              {activeTab === item.id && (
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-violet-600"></div>
+              )}
+              <div className="flex items-center space-x-3 relative z-10">
+                <span className={`${activeTab === item.id ? 'text-white' : 'text-slate-400 group-hover:text-indigo-600'}`}>
+                  {item.icon}
+                </span>
+                <span>{item.label}</span>
+              </div>
+              {activeTab === item.id && (
+                <div className="relative z-10">
+                  <ChevronRight size={16} />
+                </div>
+              )}
             </button>
           ))}
         </div>
 
-        <div className="p-4 border-t border-slate-100 bg-slate-50/50">
-          <div className="flex items-center space-x-3 mb-4 px-2">
-            <img 
-              src={currentUser.avatar} 
-              alt="Avatar" 
-              className="w-10 h-10 rounded-full border-2 border-white shadow-sm object-cover" 
+        <div className="p-4 relative z-10 bg-white/80 backdrop-blur-md border-t border-slate-100">
+          <div className="flex items-center space-x-3 mb-4 p-2 bg-slate-50 rounded-2xl border border-slate-100">
+            <img
+              src={currentUser.avatar}
+              alt="Avatar"
+              className="w-10 h-10 rounded-xl border border-white shadow-sm object-cover"
             />
             <div className="overflow-hidden">
               <p className="text-sm font-bold text-slate-900 truncate">{currentUser.name}</p>
-              <p className="text-xs text-slate-500 truncate font-medium">{currentUser.role}</p>
+              <p className="text-[10px] text-indigo-600 truncate font-bold uppercase tracking-wider">{currentUser.role}</p>
             </div>
           </div>
-          <button 
+          <button
             onClick={onLogout}
-            className="w-full flex items-center justify-center space-x-2 p-2.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-all text-sm font-semibold"
+            className="w-full flex items-center justify-center space-x-2 p-3 rounded-xl border border-red-100 text-red-600 bg-red-50 hover:bg-red-100 hover:border-red-200 transition-all text-sm font-bold group"
           >
-            <LogOut size={16} />
+            <LogOut size={16} className="group-hover:-translate-x-1 transition-transform" />
             <span>Sign Out</span>
           </button>
         </div>
@@ -111,52 +131,88 @@ const Layout: React.FC<LayoutProps> = ({ children, currentUser, onLogout, active
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm md:hidden" onClick={() => setIsMobileMenuOpen(false)}>
-          <div className="absolute left-0 top-0 bottom-0 w-72 bg-white shadow-2xl p-6" onClick={e => e.stopPropagation()}>
-             <div className="flex justify-between items-center mb-8">
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white">S</div>
-                  <span className="text-xl font-bold text-slate-900">STACKNOVA</span>
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm md:hidden animate-fade-in" onClick={() => setIsMobileMenuOpen(false)}>
+          <div
+            className="absolute left-0 top-0 bottom-0 w-[85%] max-w-sm bg-white shadow-2xl p-6 flex flex-col"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-8">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/30">
+                  S
                 </div>
-                <button onClick={() => setIsMobileMenuOpen(false)} className="p-1 rounded-md hover:bg-slate-100">
-                  <X className="text-slate-500" />
-                </button>
-             </div>
-             <div className="space-y-1">
+                <div>
+                  <span className="text-xl font-black text-slate-900 tracking-tight block leading-none">
+                    STACKNOVA
+                  </span>
+                </div>
+              </div>
+              <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors">
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-1.5 scrollbar-hide py-2">
               {menuItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => { onTabChange(item.id); setIsMobileMenuOpen(false); }}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all font-medium ${
-                    activeTab === item.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'text-slate-500 hover:bg-slate-50'
-                  }`}
+                  className={`w-full flex items-center space-x-4 px-4 py-4 rounded-2xl transition-all font-bold text-lg ${activeTab === item.id
+                      ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-500/20'
+                      : 'text-slate-500 hover:bg-slate-50'
+                    }`}
                 >
-                  {item.icon}
+                  <span className={`${activeTab === item.id ? 'text-white' : 'text-slate-400'}`}>
+                    {item.icon}
+                  </span>
                   <span>{item.label}</span>
                 </button>
               ))}
-             </div>
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-slate-100 space-y-4">
+              <div className="flex items-center space-x-3 p-3 bg-slate-50 rounded-2xl">
+                <img src={currentUser.avatar} alt="Avatar" className="w-12 h-12 rounded-xl object-cover shadow-sm bg-white" />
+                <div>
+                  <p className="font-bold text-slate-900">{currentUser.name}</p>
+                  <p className="text-xs text-indigo-600 font-bold uppercase">{currentUser.role}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { onLogout(); setIsMobileMenuOpen(false); }}
+                className="w-full flex items-center justify-center space-x-2 py-4 rounded-2xl bg-red-50 text-red-600 font-bold text-lg hover:bg-red-100 transition-colors"
+              >
+                <LogOut size={20} />
+                <span>Log Out</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden relative bg-slate-50/50">
+      <main className="flex-1 flex flex-col overflow-hidden relative bg-slate-50">
         {/* Mobile Header */}
-        <header className="md:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 shadow-sm z-10">
+        <header className="md:hidden flex items-center justify-between p-4 bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-0 z-30">
           <div className="flex items-center space-x-2">
-             <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white shadow-md shadow-indigo-200">S</div>
-             <span className="font-bold text-lg text-slate-900">STACKNOVA</span>
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center font-bold text-white shadow-md shadow-indigo-500/20">S</div>
+            <span className="font-black text-lg text-slate-900 tracking-tight">STACKNOVA</span>
           </div>
-          <button onClick={() => setIsMobileMenuOpen(true)} className="text-slate-500 p-2 hover:bg-slate-50 rounded-lg">
-            <Menu size={24} />
+          <button onClick={() => setIsMobileMenuOpen(true)} className="w-10 h-10 flex items-center justify-center text-slate-700 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">
+            <Menu size={20} />
           </button>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-10 relative scroll-smooth">
-           <div className="max-w-7xl mx-auto">
-             {children}
-           </div>
+        <div className="flex-1 overflow-y-auto relative scroll-smooth">
+          {/* Content Background */}
+          <div className="fixed inset-0 pointer-events-none z-0 opacity-50">
+            <div className="absolute top-[10%] right-[10%] w-[400px] h-[400px] bg-indigo-200/20 rounded-full blur-[100px]"></div>
+            <div className="absolute bottom-[10%] left-[10%] w-[300px] h-[300px] bg-blue-200/20 rounded-full blur-[80px]"></div>
+          </div>
+
+          <div className="max-w-7xl mx-auto p-4 md:p-8 lg:p-12 relative z-10 pb-24 md:pb-12">
+            {children}
+          </div>
         </div>
       </main>
     </div>

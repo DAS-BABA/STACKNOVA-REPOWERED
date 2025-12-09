@@ -1,154 +1,114 @@
-import { User, UserRole, Notice, AttendanceSession, Subject, Mark } from '../types';
+import { User, UserRole } from '../types';
 
-// Initial Seed Data
-const SEED_USERS: User[] = [
-  {
-    id: 'u1',
-    name: 'Dr. Robert Ford',
-    email: 'hod@stacknova.edu',
-    role: UserRole.HOD,
-    avatar: 'https://picsum.photos/200/200?random=1'
-  },
-  {
-    id: 'u2',
-    name: 'Prof. Minerva',
-    email: 'teacher@stacknova.edu',
-    role: UserRole.TEACHER,
-    division: 'A',
-    avatar: 'https://picsum.photos/200/200?random=2'
-  },
-  {
-    id: 'u3',
-    name: 'John Doe',
-    email: 'cr@stacknova.edu',
-    role: UserRole.CR,
-    enrollmentNo: 'SN2024001',
-    division: 'A',
-    classTeacherId: 'u2',
-    avatar: 'https://picsum.photos/200/200?random=3'
-  },
-  {
-    id: 'u4',
-    name: 'Alice Smith',
-    email: 'student@stacknova.edu',
-    role: UserRole.STUDENT,
-    enrollmentNo: 'SN2024002',
-    division: 'A',
-    classTeacherId: 'u2',
-    avatar: 'https://picsum.photos/200/200?random=4'
-  }
-];
+// Constants
+const STORAGE_KEY = 'stacknova_users_db';
+const ACTIVE_USER_KEY = 'stacknova_active_user';
 
-const SEED_SUBJECTS: Subject[] = [
-  {
-    id: 's1',
-    name: 'Advanced Algorithms',
-    code: 'CS401',
-    teacherId: 'u2',
-    assignments: [
-      { id: 'a1', title: 'Dynamic Programming Problem Set', dueDate: '2024-12-01', description: 'Solve problems 1-10 from Chapter 4.' }
-    ]
-  },
-  {
-    id: 's2',
-    name: 'Database Systems',
-    code: 'CS402',
-    teacherId: 'u2',
-    assignments: []
-  }
-];
-
-// Helper to simulate delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+// Initial HOD Account
+const DEFAULT_HOD: User = {
+  id: 'root-hod-001',
+  name: 'Head of Department',
+  email: 'HOD@stacknova.com',
+  password: 'admin', // Default password, should be changed
+  role: UserRole.HOD,
+  avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=HOD',
+  phoneNumber: '9999999999'
+};
 
 class MockStore {
+  private users: User[];
+
   constructor() {
-    this.init();
+    this.users = this.loadUsers();
   }
 
-  private init() {
-    if (!localStorage.getItem('stacknova_users')) {
-      localStorage.setItem('stacknova_users', JSON.stringify(SEED_USERS));
+  private loadUsers(): User[] {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) {
+      // Initialize with default HOD if no DB exists
+      const initial = [DEFAULT_HOD];
+      this.saveUsers(initial);
+      return initial;
     }
-    if (!localStorage.getItem('stacknova_subjects')) {
-      localStorage.setItem('stacknova_subjects', JSON.stringify(SEED_SUBJECTS));
-    }
-    if (!localStorage.getItem('stacknova_notices')) {
-      localStorage.setItem('stacknova_notices', JSON.stringify([]));
-    }
-    if (!localStorage.getItem('stacknova_attendance')) {
-      localStorage.setItem('stacknova_attendance', JSON.stringify([]));
-    }
+    return JSON.parse(stored);
   }
 
-  getUsers(): User[] {
-    return JSON.parse(localStorage.getItem('stacknova_users') || '[]');
+  private saveUsers(users: User[]) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+    this.users = users;
   }
 
-  getUserByEmail(email: string): User | undefined {
-    const users = this.getUsers();
-    return users.find(u => u.email === email);
-  }
+  // --- Authentication ---
 
-  async login(email: string): Promise<User> {
-    await delay(500); // Simulate network
-    const user = this.getUserByEmail(email);
+  async login(email: string, password?: string): Promise<User> {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const user = this.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+
     if (!user) {
-      throw new Error('User not found. Try hod@stacknova.edu, teacher@stacknova.edu, cr@stacknova.edu, or student@stacknova.edu');
+      throw new Error('User not found');
     }
+
+    // Direct password check (In real app, hash checking)
+    if (user.password !== password) {
+      throw new Error('Invalid password');
+    }
+
     return user;
   }
 
-  getNotices(): Notice[] {
-    return JSON.parse(localStorage.getItem('stacknova_notices') || '[]');
+  async logout(): Promise<void> {
+    localStorage.removeItem(ACTIVE_USER_KEY);
   }
 
-  addNotice(notice: Notice) {
-    const notices = this.getNotices();
-    notices.unshift(notice);
-    localStorage.setItem('stacknova_notices', JSON.stringify(notices));
-  }
+  // --- User Management (RBAC) ---
 
-  getAttendanceSessions(): AttendanceSession[] {
-    return JSON.parse(localStorage.getItem('stacknova_attendance') || '[]');
-  }
+  async registerUser(currentUser: User, newUser: User): Promise<User> {
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-  createAttendanceSession(session: AttendanceSession) {
-    const sessions = this.getAttendanceSessions();
-    sessions.push(session);
-    localStorage.setItem('stacknova_attendance', JSON.stringify(sessions));
-  }
-
-  joinAttendance(code: string, student: User, location: { lat: number; lng: number }) {
-    const sessions = this.getAttendanceSessions();
-    const sessionIndex = sessions.findIndex(s => s.code === code && s.isActive);
-    
-    if (sessionIndex === -1) {
-      throw new Error('Invalid or inactive code.');
+    if (!this.canRegister(currentUser, newUser.role)) {
+      throw new Error(`Permission denied: ${currentUser.role} cannot register ${newUser.role}`);
     }
 
-    const session = sessions[sessionIndex];
-    if (session.attendees.some(a => a.studentId === student.id)) {
-      throw new Error('You have already marked attendance for this session.');
+    if (this.users.some(u => u.email === newUser.email)) {
+      throw new Error('User with this email already exists');
     }
 
-    session.attendees.push({
-      studentId: student.id,
-      studentName: student.name,
-      enrollmentNo: student.enrollmentNo || 'N/A',
-      timestamp: new Date().toISOString(),
-      location
-    });
+    const createdUser: User = {
+      ...newUser,
+      id: crypto.randomUUID(),
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${newUser.name}`
+    };
 
-    sessions[sessionIndex] = session;
-    localStorage.setItem('stacknova_attendance', JSON.stringify(sessions));
-    return session;
+    const updatedUsers = [...this.users, createdUser];
+    this.saveUsers(updatedUsers);
+
+    return createdUser;
   }
 
-  getSubjects(userId?: string, role?: UserRole): Subject[] {
-    const subjects = JSON.parse(localStorage.getItem('stacknova_subjects') || '[]');
-    // In a real app, filter by enrollment. Here we return all for demo.
-    return subjects;
+  // RBAC Rules
+  private canRegister(registrar: User, targetRole: UserRole): boolean {
+    switch (registrar.role) {
+      case UserRole.HOD:
+        // HOD can register anyone
+        return true;
+      case UserRole.TEACHER:
+        // Teacher can only register Students (and potentially CRs)
+        return targetRole === UserRole.STUDENT || targetRole === UserRole.CR;
+      default:
+        return false;
+    }
+  }
+
+  // --- Data Access ---
+
+  getUsersByRole(role: UserRole): User[] {
+    return this.users.filter(u => u.role === role);
+  }
+
+  getAllUsers(): User[] {
+    return this.users;
   }
 }
 
